@@ -1,0 +1,35 @@
+useDynLib("spenvlp")
+
+import("methods")
+
+export(spenvlp,
+predict.spenvlp,
+cv.spenvlp,
+cv2d.spenvlp,
+
+## kernel functions
+"rbfdot",
+"laplacedot",
+"besseldot",
+"polydot",
+"tanhdot",
+"vanilladot",
+"anovadot",
+"splinedot",
+"stringdot",
+"kernelMatrix",
+"kernelMult",
+"kernelPol",
+"kernelFast",
+"as.kernelMatrix",
+"kpar"
+)
+
+S3method("plot","spenvlp")
+S3method("plot","cv.spenvlp")
+S3method("predict","spenvlp")
+
+exportClasses("kernel", "rbfkernel", "laplacekernel",
+              "besselkernel", "tanhkernel", "polykernel","fourierkernel",
+              "vanillakernel", "anovakernel", "splinekernel",
+              "stringkernel","kernelMatrix","kfunction")
