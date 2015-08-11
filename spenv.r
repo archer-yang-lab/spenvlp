@@ -29,63 +29,70 @@ spenv <- function(X, Y, u, eps=1e-10, maxit=1e4, ulam, weight) {
 		maxiter = 100
 		ftol = 1e-5
 	
-		sigY <- cov(Y) 
-		invsigY <- chol2inv(chol(sigY)) * n / (n-1)
-		invsigX <- chol2inv(chol(cov(X)))
-		sigYX <- cov(Y, X)
-		sigRes <- (sigY - sigYX %*% tcrossprod(invsigX, sigYX)) * (n-1) / n
-		betaOLS <- sigYX %*% invsigX
+		# sigY <- cov(Y) 
+		# invsigY <- chol2inv(chol(sigY)) * n / (n-1)
+		# invsigX <- chol2inv(chol(cov(X)))
+		# sigYX <- cov(Y, X)
+		# sigRes <- (sigY - sigYX %*% tcrossprod(invsigX, sigYX)) * (n-1) / n
+		# betaOLS <- sigYX %*% invsigX
+		# 
+		# tmp.y <- eigen(sigY)
+		# bsxb <- tcrossprod(betaOLS, sigYX)
+		# tmp2.y <- crossprod(tmp.y$vectors, bsxb)
+		# tmp3.y <- sort(diag(tcrossprod(tmp2.y, tmp2.y)), decreasing = TRUE, index.return = TRUE)
+		# init <- as.matrix(tmp.y$vectors[, tmp3.y$ix[1:u]]) 
+		# 	
+		# if (n > r + 1) {
+		# 	eig1 <- eigen(t(init) %*% sigRes %*% init)
+		# 	eig2 <- eigen(t(init) %*% invsigY %*% init)
+		# 	obj1 <- sum(log(eig1$values)) + sum(log(eig2$values))
+		# 	
+		# 	tmp2 <- diag(1/sqrt(tmp.y$values)) %*% tmp2.y
+		# 	tmp3 <- sort(diag(tcrossprod(tmp2, tmp2)), decreasing = TRUE, index.return = TRUE)
+		# 	init.y <- as.matrix(tmp.y$vectors[, tmp3$ix[1:u]])
+		# 	e1 <- eigen(t(init.y) %*% sigRes %*% init.y)
+		# 	e2 <- eigen(t(init.y) %*% invsigY %*% init.y)
+		# 	obj2 <- sum(log(e1$values)) + sum(log(e2$values))		
+		# 	if (obj2 < obj1) {
+		# 		init <- init.y
+		# 		obj1 <- obj2
+		# 	}
+		# 	
+		# 	if (n > r + p + 1) {
+		# 		tmp.res <- eigen(sigRes * (n-1) / n)
+		# 		tmp2.res <- crossprod(tmp.res$vectors, bsxb)
+		# 		tmp3.res <- sort(diag(tcrossprod(tmp2.res, tmp2.res)), decreasing = TRUE, index.return = TRUE)	
+		# 		init.res <- as.matrix(tmp.res$vectors[, tmp3.res$ix[1:u]])
+		# 		e1 <- eigen(t(init.res) %*% sigRes %*% init.res)
+		# 		e2 <- eigen(t(init.res) %*% invsigY %*% init.res)
+		# 		obj3 <- sum(log(e1$values)) + sum(log(e2$values))			
+		# 		if (obj3 < obj1) {
+		# 			init <- init.res
+		# 			obj1 <- obj3
+		# 		}
+		# 		
+		# 		tmp2.res <- diag(1/sqrt(tmp.res$values)) %*% tmp2.res
+		# 		tmp3.res <- sort(diag(tcrossprod(tmp2.res, tmp2.res)), decreasing = TRUE, index.return = TRUE)
+		# 		init.res <- as.matrix(tmp.res$vectors[, tmp3.res$ix[1:u]])
+		# 		e1 <- eigen(t(init.res) %*% sigRes %*% init.res)
+		# 		e2 <- eigen(t(init.res) %*% invsigY %*% init.res)				
+		# 		obj4 <- sum(log(e1$values)) + sum(log(e2$values))			
+		# 		if (obj4 < obj1) {
+		# 			init <- init.res
+		# 			obj1 <- obj4
+		# 		}
+		# 	}
+		# }
+		# 
+		# Ginit <- init %*% solve(init[1:u, ])
 
-		tmp.y <- eigen(sigY)
-		bsxb <- tcrossprod(betaOLS, sigYX)
-		tmp2.y <- crossprod(tmp.y$vectors, bsxb)
-		tmp3.y <- sort(diag(tcrossprod(tmp2.y, tmp2.y)), decreasing = TRUE, index.return = TRUE)
-		init <- as.matrix(tmp.y$vectors[, tmp3.y$ix[1:u]]) 
+		sv <- initial_value(X, Y, u)
+		Ginit <- sv$Ginit
+		obj1 <- sv$obj1
+		sigRes <- sv$sigRes
+		invsigY <- sv$invsigY
+		betaOLS <- sv$betaOLS
 			
-		if (n > r + 1) {
-			eig1 <- eigen(t(init) %*% sigRes %*% init)
-			eig2 <- eigen(t(init) %*% invsigY %*% init)
-			obj1 <- sum(log(eig1$values)) + sum(log(eig2$values))
-			
-			tmp2 <- diag(1/sqrt(tmp.y$values)) %*% tmp2.y
-			tmp3 <- sort(diag(tcrossprod(tmp2, tmp2)), decreasing = TRUE, index.return = TRUE)
-			init.y <- as.matrix(tmp.y$vectors[, tmp3$ix[1:u]])
-			e1 <- eigen(t(init.y) %*% sigRes %*% init.y)
-			e2 <- eigen(t(init.y) %*% invsigY %*% init.y)
-			obj2 <- sum(log(e1$values)) + sum(log(e2$values))		
-			if (obj2 < obj1) {
-				init <- init.y
-				obj1 <- obj2
-			}
-			
-			if (n > r + p + 1) {
-				tmp.res <- eigen(sigRes * (n-1) / n)
-				tmp2.res <- crossprod(tmp.res$vectors, bsxb)
-				tmp3.res <- sort(diag(tcrossprod(tmp2.res, tmp2.res)), decreasing = TRUE, index.return = TRUE)	
-				init.res <- as.matrix(tmp.res$vectors[, tmp3.res$ix[1:u]])
-				e1 <- eigen(t(init.res) %*% sigRes %*% init.res)
-				e2 <- eigen(t(init.res) %*% invsigY %*% init.res)
-				obj3 <- sum(log(e1$values)) + sum(log(e2$values))			
-				if (obj3 < obj1) {
-					init <- init.res
-					obj1 <- obj3
-				}
-				
-				tmp2.res <- diag(1/sqrt(tmp.res$values)) %*% tmp2.res
-				tmp3.res <- sort(diag(tcrossprod(tmp2.res, tmp2.res)), decreasing = TRUE, index.return = TRUE)
-				init.res <- as.matrix(tmp.res$vectors[, tmp3.res$ix[1:u]])
-				e1 <- eigen(t(init.res) %*% sigRes %*% init.res)
-				e2 <- eigen(t(init.res) %*% invsigY %*% init.res)				
-				obj4 <- sum(log(e1$values)) + sum(log(e2$values))			
-				if (obj4 < obj1) {
-					init <- init.res
-					obj1 <- obj4
-				}
-			}
-		}
-
-		Ginit <- init %*% solve(init[1:u, ])
-
 		U1c2 <- array(0, dim = c(r-1, r-1))
 		V1c2 <- array(0, dim = c(r-1, r-1))
 
@@ -140,64 +147,70 @@ spenv <- function(X, Y, u, eps=1e-10, maxit=1e4, ulam, weight) {
 		ftol = 1e-5
 		
 
-		sigY <- cov(Y) 
-		invsigY <- chol2inv(chol(sigY)) * n / (n-1)
-		invsigX <- chol2inv(chol(cov(X)))
-		sigYX <- cov(Y, X)
-		sigRes <- (sigY - sigYX %*% tcrossprod(invsigX, sigYX)) * (n-1) / n
-		betaOLS <- sigYX %*% invsigX
-		
-		tmp.y <- eigen(sigY)
-		bsxb <- tcrossprod(betaOLS, sigYX)
-		tmp2.y <- crossprod(tmp.y$vectors, bsxb)
-		tmp3.y <- sort(diag(tcrossprod(tmp2.y, tmp2.y)), decreasing = TRUE, index.return = TRUE)
-		init <- as.matrix(tmp.y$vectors[, tmp3.y$ix[1:u]]) 
-			
-		if (n > r + 1) {
-			eig1 <- eigen(t(init) %*% sigRes %*% init)
-			eig2 <- eigen(t(init) %*% invsigY %*% init)
-			obj1 <- sum(log(eig1$values)) + sum(log(eig2$values))
-			
-			tmp2 <- diag(1/sqrt(tmp.y$values)) %*% tmp2.y
-			tmp3 <- sort(diag(tcrossprod(tmp2, tmp2)), decreasing = TRUE, index.return = TRUE)
-			init.y <- as.matrix(tmp.y$vectors[, tmp3$ix[1:u]])
-			e1 <- eigen(t(init.y) %*% sigRes %*% init.y)
-			e2 <- eigen(t(init.y) %*% invsigY %*% init.y)
-			obj2 <- sum(log(e1$values)) + sum(log(e2$values))		
-			if (obj2 < obj1) {
-				init <- init.y
-				obj1 <- obj2
-			}
-			
-			if (n > r + p + 1) {
-				tmp.res <- eigen(sigRes * (n-1) / n)
-				tmp2.res <- crossprod(tmp.res$vectors, bsxb)
-				tmp3.res <- sort(diag(tcrossprod(tmp2.res, tmp2.res)), decreasing = TRUE, index.return = TRUE)	
-				init.res <- as.matrix(tmp.res$vectors[, tmp3.res$ix[1:u]])
-				e1 <- eigen(t(init.res) %*% sigRes %*% init.res)
-				e2 <- eigen(t(init.res) %*% invsigY %*% init.res)
-				obj3 <- sum(log(e1$values)) + sum(log(e2$values))			
-				if (obj3 < obj1) {
-					init <- init.res
-					obj1 <- obj3
-				}
-				
-				tmp2.res <- diag(1/sqrt(tmp.res$values)) %*% tmp2.res
-				tmp3.res <- sort(diag(tcrossprod(tmp2.res, tmp2.res)), decreasing = TRUE, index.return = TRUE)
-				init.res <- as.matrix(tmp.res$vectors[, tmp3.res$ix[1:u]])
-				e1 <- eigen(t(init.res) %*% sigRes %*% init.res)
-				e2 <- eigen(t(init.res) %*% invsigY %*% init.res)				
-				obj4 <- sum(log(e1$values)) + sum(log(e2$values))			
-				if (obj4 < obj1) {
-					init <- init.res
-					obj1 <- obj4
-				}
-			}
-		}
-		
+		# sigY <- cov(Y) 
+		# invsigY <- chol2inv(chol(sigY)) * n / (n-1)
+		# invsigX <- chol2inv(chol(cov(X)))
+		# sigYX <- cov(Y, X)
+		# sigRes <- (sigY - sigYX %*% tcrossprod(invsigX, sigYX)) * (n-1) / n
+		# betaOLS <- sigYX %*% invsigX
+		# 
+		# tmp.y <- eigen(sigY)
+		# bsxb <- tcrossprod(betaOLS, sigYX)
+		# tmp2.y <- crossprod(tmp.y$vectors, bsxb)
+		# tmp3.y <- sort(diag(tcrossprod(tmp2.y, tmp2.y)), decreasing = TRUE, index.return = TRUE)
+		# init <- as.matrix(tmp.y$vectors[, tmp3.y$ix[1:u]]) 
+		# 	
+		# if (n > r + 1) {
+		# 	eig1 <- eigen(t(init) %*% sigRes %*% init)
+		# 	eig2 <- eigen(t(init) %*% invsigY %*% init)
+		# 	obj1 <- sum(log(eig1$values)) + sum(log(eig2$values))
+		# 	
+		# 	tmp2 <- diag(1/sqrt(tmp.y$values)) %*% tmp2.y
+		# 	tmp3 <- sort(diag(tcrossprod(tmp2, tmp2)), decreasing = TRUE, index.return = TRUE)
+		# 	init.y <- as.matrix(tmp.y$vectors[, tmp3$ix[1:u]])
+		# 	e1 <- eigen(t(init.y) %*% sigRes %*% init.y)
+		# 	e2 <- eigen(t(init.y) %*% invsigY %*% init.y)
+		# 	obj2 <- sum(log(e1$values)) + sum(log(e2$values))		
+		# 	if (obj2 < obj1) {
+		# 		init <- init.y
+		# 		obj1 <- obj2
+		# 	}
+		# 	
+		# 	if (n > r + p + 1) {
+		# 		tmp.res <- eigen(sigRes * (n-1) / n)
+		# 		tmp2.res <- crossprod(tmp.res$vectors, bsxb)
+		# 		tmp3.res <- sort(diag(tcrossprod(tmp2.res, tmp2.res)), decreasing = TRUE, index.return = TRUE)	
+		# 		init.res <- as.matrix(tmp.res$vectors[, tmp3.res$ix[1:u]])
+		# 		e1 <- eigen(t(init.res) %*% sigRes %*% init.res)
+		# 		e2 <- eigen(t(init.res) %*% invsigY %*% init.res)
+		# 		obj3 <- sum(log(e1$values)) + sum(log(e2$values))			
+		# 		if (obj3 < obj1) {
+		# 			init <- init.res
+		# 			obj1 <- obj3
+		# 		}
+		# 		
+		# 		tmp2.res <- diag(1/sqrt(tmp.res$values)) %*% tmp2.res
+		# 		tmp3.res <- sort(diag(tcrossprod(tmp2.res, tmp2.res)), decreasing = TRUE, index.return = TRUE)
+		# 		init.res <- as.matrix(tmp.res$vectors[, tmp3.res$ix[1:u]])
+		# 		e1 <- eigen(t(init.res) %*% sigRes %*% init.res)
+		# 		e2 <- eigen(t(init.res) %*% invsigY %*% init.res)				
+		# 		obj4 <- sum(log(e1$values)) + sum(log(e2$values))			
+		# 		if (obj4 < obj1) {
+		# 			init <- init.res
+		# 			obj1 <- obj4
+		# 		}
+		# 	}
+		# }
+		# 
+		# 
+		# Ginit <- init %*% solve(init[1:u, ])
 
-		Ginit <- init %*% solve(init[1:u, ])
-
+		sv <- initial_value(X, Y, u)
+		Ginit <- sv$Ginit
+		obj1 <- sv$obj1
+		sigRes <- sv$sigRes
+		invsigY <- sv$invsigY
+		betaOLS <- sv$betaOLS
 
 		GUG <- crossprod(Ginit, (sigRes %*% Ginit))	
 		GVG <- crossprod(Ginit, (invsigY %*% Ginit))		
