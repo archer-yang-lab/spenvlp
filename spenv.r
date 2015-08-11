@@ -28,63 +28,6 @@ spenv <- function(X, Y, u, eps=1e-10, maxit=1e4, ulam, weight) {
 	
 		maxiter = 100
 		ftol = 1e-5
-	
-		# sigY <- cov(Y) 
-		# invsigY <- chol2inv(chol(sigY)) * n / (n-1)
-		# invsigX <- chol2inv(chol(cov(X)))
-		# sigYX <- cov(Y, X)
-		# sigRes <- (sigY - sigYX %*% tcrossprod(invsigX, sigYX)) * (n-1) / n
-		# betaOLS <- sigYX %*% invsigX
-		# 
-		# tmp.y <- eigen(sigY)
-		# bsxb <- tcrossprod(betaOLS, sigYX)
-		# tmp2.y <- crossprod(tmp.y$vectors, bsxb)
-		# tmp3.y <- sort(diag(tcrossprod(tmp2.y, tmp2.y)), decreasing = TRUE, index.return = TRUE)
-		# init <- as.matrix(tmp.y$vectors[, tmp3.y$ix[1:u]]) 
-		# 	
-		# if (n > r + 1) {
-		# 	eig1 <- eigen(t(init) %*% sigRes %*% init)
-		# 	eig2 <- eigen(t(init) %*% invsigY %*% init)
-		# 	obj1 <- sum(log(eig1$values)) + sum(log(eig2$values))
-		# 	
-		# 	tmp2 <- diag(1/sqrt(tmp.y$values)) %*% tmp2.y
-		# 	tmp3 <- sort(diag(tcrossprod(tmp2, tmp2)), decreasing = TRUE, index.return = TRUE)
-		# 	init.y <- as.matrix(tmp.y$vectors[, tmp3$ix[1:u]])
-		# 	e1 <- eigen(t(init.y) %*% sigRes %*% init.y)
-		# 	e2 <- eigen(t(init.y) %*% invsigY %*% init.y)
-		# 	obj2 <- sum(log(e1$values)) + sum(log(e2$values))		
-		# 	if (obj2 < obj1) {
-		# 		init <- init.y
-		# 		obj1 <- obj2
-		# 	}
-		# 	
-		# 	if (n > r + p + 1) {
-		# 		tmp.res <- eigen(sigRes * (n-1) / n)
-		# 		tmp2.res <- crossprod(tmp.res$vectors, bsxb)
-		# 		tmp3.res <- sort(diag(tcrossprod(tmp2.res, tmp2.res)), decreasing = TRUE, index.return = TRUE)	
-		# 		init.res <- as.matrix(tmp.res$vectors[, tmp3.res$ix[1:u]])
-		# 		e1 <- eigen(t(init.res) %*% sigRes %*% init.res)
-		# 		e2 <- eigen(t(init.res) %*% invsigY %*% init.res)
-		# 		obj3 <- sum(log(e1$values)) + sum(log(e2$values))			
-		# 		if (obj3 < obj1) {
-		# 			init <- init.res
-		# 			obj1 <- obj3
-		# 		}
-		# 		
-		# 		tmp2.res <- diag(1/sqrt(tmp.res$values)) %*% tmp2.res
-		# 		tmp3.res <- sort(diag(tcrossprod(tmp2.res, tmp2.res)), decreasing = TRUE, index.return = TRUE)
-		# 		init.res <- as.matrix(tmp.res$vectors[, tmp3.res$ix[1:u]])
-		# 		e1 <- eigen(t(init.res) %*% sigRes %*% init.res)
-		# 		e2 <- eigen(t(init.res) %*% invsigY %*% init.res)				
-		# 		obj4 <- sum(log(e1$values)) + sum(log(e2$values))			
-		# 		if (obj4 < obj1) {
-		# 			init <- init.res
-		# 			obj1 <- obj4
-		# 		}
-		# 	}
-		# }
-		# 
-		# Ginit <- init %*% solve(init[1:u, ])
 
 		sv <- initial_value(X, Y, u)
 		Ginit <- sv$Ginit
@@ -98,7 +41,6 @@ spenv <- function(X, Y, u, eps=1e-10, maxit=1e4, ulam, weight) {
 
 		U1c2 <- sigRes[-r, -r] - as.matrix(sigRes[-r, r]) %*% sigRes[r, -r] / sigRes[r, r]
 		V1c2 <- invsigY[-r, -r] - as.matrix(invsigY[-r, r]) %*% invsigY[r, -r] / invsigY[r, r]		
-
 
 		i <- 1
 		while (i < maxiter) {
@@ -145,65 +87,6 @@ spenv <- function(X, Y, u, eps=1e-10, maxit=1e4, ulam, weight) {
 
 		maxiter = 100
 		ftol = 1e-5
-		
-
-		# sigY <- cov(Y) 
-		# invsigY <- chol2inv(chol(sigY)) * n / (n-1)
-		# invsigX <- chol2inv(chol(cov(X)))
-		# sigYX <- cov(Y, X)
-		# sigRes <- (sigY - sigYX %*% tcrossprod(invsigX, sigYX)) * (n-1) / n
-		# betaOLS <- sigYX %*% invsigX
-		# 
-		# tmp.y <- eigen(sigY)
-		# bsxb <- tcrossprod(betaOLS, sigYX)
-		# tmp2.y <- crossprod(tmp.y$vectors, bsxb)
-		# tmp3.y <- sort(diag(tcrossprod(tmp2.y, tmp2.y)), decreasing = TRUE, index.return = TRUE)
-		# init <- as.matrix(tmp.y$vectors[, tmp3.y$ix[1:u]]) 
-		# 	
-		# if (n > r + 1) {
-		# 	eig1 <- eigen(t(init) %*% sigRes %*% init)
-		# 	eig2 <- eigen(t(init) %*% invsigY %*% init)
-		# 	obj1 <- sum(log(eig1$values)) + sum(log(eig2$values))
-		# 	
-		# 	tmp2 <- diag(1/sqrt(tmp.y$values)) %*% tmp2.y
-		# 	tmp3 <- sort(diag(tcrossprod(tmp2, tmp2)), decreasing = TRUE, index.return = TRUE)
-		# 	init.y <- as.matrix(tmp.y$vectors[, tmp3$ix[1:u]])
-		# 	e1 <- eigen(t(init.y) %*% sigRes %*% init.y)
-		# 	e2 <- eigen(t(init.y) %*% invsigY %*% init.y)
-		# 	obj2 <- sum(log(e1$values)) + sum(log(e2$values))		
-		# 	if (obj2 < obj1) {
-		# 		init <- init.y
-		# 		obj1 <- obj2
-		# 	}
-		# 	
-		# 	if (n > r + p + 1) {
-		# 		tmp.res <- eigen(sigRes * (n-1) / n)
-		# 		tmp2.res <- crossprod(tmp.res$vectors, bsxb)
-		# 		tmp3.res <- sort(diag(tcrossprod(tmp2.res, tmp2.res)), decreasing = TRUE, index.return = TRUE)	
-		# 		init.res <- as.matrix(tmp.res$vectors[, tmp3.res$ix[1:u]])
-		# 		e1 <- eigen(t(init.res) %*% sigRes %*% init.res)
-		# 		e2 <- eigen(t(init.res) %*% invsigY %*% init.res)
-		# 		obj3 <- sum(log(e1$values)) + sum(log(e2$values))			
-		# 		if (obj3 < obj1) {
-		# 			init <- init.res
-		# 			obj1 <- obj3
-		# 		}
-		# 		
-		# 		tmp2.res <- diag(1/sqrt(tmp.res$values)) %*% tmp2.res
-		# 		tmp3.res <- sort(diag(tcrossprod(tmp2.res, tmp2.res)), decreasing = TRUE, index.return = TRUE)
-		# 		init.res <- as.matrix(tmp.res$vectors[, tmp3.res$ix[1:u]])
-		# 		e1 <- eigen(t(init.res) %*% sigRes %*% init.res)
-		# 		e2 <- eigen(t(init.res) %*% invsigY %*% init.res)				
-		# 		obj4 <- sum(log(e1$values)) + sum(log(e2$values))			
-		# 		if (obj4 < obj1) {
-		# 			init <- init.res
-		# 			obj1 <- obj4
-		# 		}
-		# 	}
-		# }
-		# 
-		# 
-		# Ginit <- init %*% solve(init[1:u, ])
 
 		sv <- initial_value(X, Y, u)
 		Ginit <- sv$Ginit
@@ -215,7 +98,6 @@ spenv <- function(X, Y, u, eps=1e-10, maxit=1e4, ulam, weight) {
 		GUG <- crossprod(Ginit, (sigRes %*% Ginit))	
 		GVG <- crossprod(Ginit, (invsigY %*% Ginit))		
 
-		
 		t4 <- crossprod(Ginit[(u+1):r,], Ginit[(u+1):r, ]) + diag(u)
 		i <- 1
 		while (i < maxiter) {
@@ -234,25 +116,7 @@ spenv <- function(X, Y, u, eps=1e-10, maxit=1e4, ulam, weight) {
 				invC1 <- chol2inv(chol(GUG))
 				invC2 <- chol2inv(chol(GVG))
 				invt4 <- chol2inv(chol(t4))
-						
-				# fobj <- function(x) {
-				# 	tmp2 <- x + t2
-				# 	tmp3 <- x + t3
-				# 	T1 <- invt4 %*% x
-				# 	T2 <- invC1 %*% tmp2	
-				# 	T3 <- invC2 %*% tmp3
-				# 	-2 * log(1 + x %*% T1) + log(1 + sigRes[j, j] * crossprod(tmp2, T2)) + log(1 + invsigY[j, j] * crossprod(tmp3, T3))
-				# }
-				# 			
-				# gobj <- function(x) {
-				# 	tmp2 <- x + t2
-				# 	tmp3 <- x + t3
-				# 	T1 <- invt4 %*% x
-				# 	T2 <- invC1 %*% tmp2	
-				# 	T3 <- invC2 %*% tmp3
-				# 	-4 	* T1 / as.numeric(1 + x %*% T1) + 2 * T2 / as.numeric(1 / sigRes[j, j] + crossprod(tmp2, T2)) + 2 * T3 / as.numeric(1 / invsigY[j, j] + crossprod(tmp3, T3))	
-				# }
-				# res <- optim(Ginit[j,], fobj, gobj, method = "BFGS")
+
 				res <- spenvlp(b2=drop(t2), b3=drop(t3), A1=invt4, A2=sigRes[j, j]*invC1, A3=invsigY[j, j]*invC2, ulam=ulam, eps=eps, maxit=maxit, weight=weight[j-u], a_vec_init=drop(Ginit[j,]))
 				
 				old_Ginit <- Ginit[j, ]
@@ -265,8 +129,6 @@ spenv <- function(X, Y, u, eps=1e-10, maxit=1e4, ulam, weight) {
 				
 				GVGt2 <- g + t3
 				GVG <- GVG + tcrossprod(GVGt2, GVGt2) * invsigY[j, j] 
-				
-				
 			}
 			if(sum((Ginit[j,]-old_Ginit)^2) < eps) break
 			i <- i + 1
