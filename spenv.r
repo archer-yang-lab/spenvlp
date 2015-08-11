@@ -4,14 +4,21 @@ spenv <- function(X, Y, u, eps=1e-10, maxit=1e4, ulam, weight) {
 	n <- a[1]
 	r <- a[2]
 	p <- ncol(X)
-
-	if (u == 0) {
+	betahat = NA 
+	etahat = NA 
+	Gammahat = NA
+	Gamma0hat = NA
+	sigRes = NA
+	invsigY = NA
 	
+	if (u == 0) {
+
 		Gammahat <- NA
 		Gamma0hat <- diag(r)
 		betahat <- matrix(0, r, p)
 		etahat <- betahat
-		return(list(betahat = betahat, etahat = etahat, Gammahat = Gammahat, Gamma0hat = Gamma0hat))
+		sigRes <- cov(Y) * (n - 1) / n
+		invsigY <- chol2inv(chol(sigRes))
 		
 	} else if (u == r) {
 	
@@ -19,10 +26,12 @@ spenv <- function(X, Y, u, eps=1e-10, maxit=1e4, ulam, weight) {
 		Xc <- as.matrix(scale(X, center = T, scale = F))
 		invsigX <- chol2inv(chol(cov(X)))
 		sigYX <- cov(Yc, Xc)
-		betaOLS <- sigYX %*% invsigX
+		betahat <- betaOLS <- sigYX %*% invsigX
 		Gammahat <- diag(r)
 		Gamma0hat <- NA
-		return(list(betahat = betaOLS, etahat = betaOLS, Gammahat = Gammahat, Gamma0hat = Gamma0hat))
+		sigY <- cov(Y) * (n-1) / n
+		invsigY <- chol2inv(chol(sigY))
+		sigRes <- sigY - sigYX %*% tcrossprod(invsigX, sigYX) * (n - 1) / n
 		
 	} else if (u == (r-1)) {
 	
@@ -49,7 +58,11 @@ spenv <- function(X, Y, u, eps=1e-10, maxit=1e4, ulam, weight) {
 			invC1 <- chol2inv(chol(U1c2))
 			invC2 <- chol2inv(chol(V1c2))
 	
-			res <- spenvlp(b2=drop(t2), b3=drop(t3), A1=diag(r-1), A2=sigRes[r, r]*invC1, A3=invsigY[r, r]*invC2, ulam=ulam, eps=eps, maxit=maxit, weight=weight[r-u], a_vec_init=drop(Ginit[r,]))
+			res <- spenvlp(b2=drop(t2), b3=drop(t3), 
+							A1=diag(r-1), A2=sigRes[r, r]*invC1, A3=invsigY[r, r]*invC2, 
+							ulam=ulam, eps=eps, maxit=maxit, 
+							weight=weight[r-u], 
+							a_vec_init=drop(Ginit[r,]))
 		
 			old_Ginit <- Ginit[r, ]
 			Ginit[r, ] <- res$a_vec
@@ -61,9 +74,7 @@ spenv <- function(X, Y, u, eps=1e-10, maxit=1e4, ulam, weight) {
 		Gammahat <- a[, 1:u]
 		Gamma0hat <- a[, r]
 		etahat <- crossprod(Gammahat, betaOLS)
-		betahat <- Gammahat %*% etahat
-		return(list(betahat = betahat, etahat = etahat, Gammahat = Gammahat, Gamma0hat = Gamma0hat))	
-	
+		betahat <- Gammahat %*% etahat	
 	} else {
 
 		maxiter = 100
@@ -119,8 +130,9 @@ spenv <- function(X, Y, u, eps=1e-10, maxit=1e4, ulam, weight) {
 		Gamma0hat <- a[, (u+1):r]
 		etahat <- crossprod(Gammahat, betaOLS)
 		betahat <- Gammahat %*% etahat
-		return(list(betahat = betahat, etahat = etahat, Gammahat = Gammahat, Gamma0hat = Gamma0hat))
 	}
+	nonzero_index <- (rowSums(abs(Gammahat))>0)
+	return(list(betahat = betahat, etahat = etahat, Gammahat = Gammahat, Gamma0hat = Gamma0hat, sigRes = sigRes, invsigY = invsigY, r = r, n = n, nonzero_index = nonzero_index))
 }
 	
 

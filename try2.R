@@ -1,6 +1,7 @@
 source("spenv.r", chdir = TRUE)
 source("spenvlp.R", chdir = TRUE)
 source("initial_value.r", chdir = TRUE)
+source("loglik.r", chdir = TRUE)
 
 
 n <- 2000
@@ -11,7 +12,8 @@ X <- matrix(rnorm(n * p), n, p)
 Y <- matrix(rnorm(n * r), n, r)
 
 
-spenv(X, Y, u, eps=1e-10, maxit=1e4, ulam=1e-3, weight=rep(1,r-u))
+res <- spenv(X, Y, u, eps=1e-10, maxit=1e4, ulam=1e-3, weight=rep(1,r-u))
+loglik(res$Gammahat, res$sigRes, res$invsigY, res$r, res$n) 
 
 
 
