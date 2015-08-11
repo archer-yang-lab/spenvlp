@@ -1,4 +1,4 @@
-env <- function(X, Y, u) {
+spenv <- function(X, Y, u, eps=1e-10, maxit=1e4, ulam, weight) {
 
 	a <- dim(Y)
 	n <- a[1]
@@ -7,7 +7,7 @@ env <- function(X, Y, u) {
 
 	if (u == 0) {
 	
-		Gammahat <- c()
+		Gammahat <- NA
 		Gamma0hat <- diag(r)
 		betahat <- matrix(0, r, p)
 		etahat <- betahat
@@ -21,7 +21,7 @@ env <- function(X, Y, u) {
 		sigYX <- cov(Yc, Xc)
 		betaOLS <- sigYX %*% invsigX
 		Gammahat <- diag(r)
-		Gamma0hat <- c()
+		Gamma0hat <- NA
 		return(list(betahat = betaOLS, etahat = betaOLS, Gammahat = Gammahat, Gamma0hat = Gamma0hat))
 		
 	} else if (u == (r-1)) {
@@ -222,27 +222,30 @@ env <- function(X, Y, u) {
 				invC2 <- chol2inv(chol(GVG))
 				invt4 <- chol2inv(chol(t4))
 						
-				fobj <- function(x) {
-					tmp2 <- x + t2
-					tmp3 <- x + t3
-					T1 <- invt4 %*% x
-					T2 <- invC1 %*% tmp2	
-					T3 <- invC2 %*% tmp3
-					-2 * log(1 + x %*% T1) + log(1 + sigRes[j, j] * crossprod(tmp2, T2)) + log(1 + invsigY[j, j] * crossprod(tmp3, T3))
-				}
-			
-				gobj <- function(x) {
-					tmp2 <- x + t2
-					tmp3 <- x + t3
-					T1 <- invt4 %*% x
-					T2 <- invC1 %*% tmp2	
-					T3 <- invC2 %*% tmp3
-					-4 	* T1 / as.numeric(1 + x %*% T1) + 2 * T2 / as.numeric(1 / sigRes[j, j] + crossprod(tmp2, T2)) + 2 * T3 / as.numeric(1 / invsigY[j, j] + crossprod(tmp3, T3))	
-				}
-			
-				res <- optim(Ginit[j,], fobj, gobj, method = "BFGS")
-				Ginit[j, ] <- res$par
+				# fobj <- function(x) {
+				# 	tmp2 <- x + t2
+				# 	tmp3 <- x + t3
+				# 	T1 <- invt4 %*% x
+				# 	T2 <- invC1 %*% tmp2	
+				# 	T3 <- invC2 %*% tmp3
+				# 	-2 * log(1 + x %*% T1) + log(1 + sigRes[j, j] * crossprod(tmp2, T2)) + log(1 + invsigY[j, j] * crossprod(tmp3, T3))
+				# }
+				# 			
+				# gobj <- function(x) {
+				# 	tmp2 <- x + t2
+				# 	tmp3 <- x + t3
+				# 	T1 <- invt4 %*% x
+				# 	T2 <- invC1 %*% tmp2	
+				# 	T3 <- invC2 %*% tmp3
+				# 	-4 	* T1 / as.numeric(1 + x %*% T1) + 2 * T2 / as.numeric(1 / sigRes[j, j] + crossprod(tmp2, T2)) + 2 * T3 / as.numeric(1 / invsigY[j, j] + crossprod(tmp3, T3))	
+				# }
+				# res <- optim(Ginit[j,], fobj, gobj, method = "BFGS")
+				res <- spenvlp(b2=drop(t2), b3=drop(t3), A1=invt4, A2=sigRes[j, j]*invC1, A3=invsigY[j, j]*invC2, ulam=ulam, eps=eps, maxit=maxit, weight=weight[j-u], a_vec_init=drop(Ginit[j,]))
+				
+				old_Ginit <- Ginit[j, ]
+				Ginit[j, ] <- res$a_vec
 				g <- as.matrix(Ginit[j, ])
+				# print(g)
 				t4 <- t4 + tcrossprod(g, g)
 				GUGt2 <- g + t2
 				GUG <- GUG + tcrossprod(GUGt2, GUGt2) * sigRes[j, j]
@@ -252,14 +255,8 @@ env <- function(X, Y, u) {
 				
 				
 			}
-	
-			if (abs(fobj(Ginit[j,]) - res$value) < ftol * fobj(Ginit[j,])) {
-				Ginit[j,] <- res$par
-				break
-			} else {
-				Ginit[j,] <- res$par
-				i <- i + 1
-			}
+			if(sum((Ginit[j,]-old_Ginit)^2) < eps) break
+			i <- i + 1
 		}
 		a <- qr.Q(qr(Ginit), complete = TRUE)
 		Gammahat <- a[, 1:u]

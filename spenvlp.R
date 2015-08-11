@@ -20,6 +20,10 @@ spenvlp <- function(b2, b3, A1, A2, A3, ulam,
 		U_working <- (U + gamma * olda_vec)
 		U_norm <- drop(sqrt(crossprod(U_working,U_working)))
 		t <- U_norm - weight * ulam
+		# print(t)
+		# print(U_norm)
+		# print(weight)
+		# print(ulam)		
 		if(t > 0){
 			a_vec <- U_working * t / (gamma * U_norm)
 		}else{
