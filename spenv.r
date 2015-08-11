@@ -48,33 +48,14 @@ spenv <- function(X, Y, u, eps=1e-10, maxit=1e4, ulam, weight) {
 			t3 <- invsigY[-r, r] / invsigY[r, r]
 			invC1 <- chol2inv(chol(U1c2))
 			invC2 <- chol2inv(chol(V1c2))
-				
-			fobj <- function(x) {
-				tmp2 <- x + t2
-				tmp3 <- x + t3
-				T2 <- invC1 %*% tmp2	
-				T3 <- invC2 %*% tmp3
-				-2 * log(1 + sum(x^2)) + log(1 + sigRes[r, r] * crossprod(tmp2, T2)) + log(1 + invsigY[r, r] * crossprod(tmp3, T3))
-			}
 	
-			gobj <- function(x) {
-				tmp2 <- x + t2
-				tmp3 <- x + t3
-				T2 <- invC1 %*% tmp2	
-				T3 <- invC2 %*% tmp3
-				-4 * x %*% solve(1 + sum(x^2)) + 2 * T2 / as.numeric(1 / sigRes[r, r] + crossprod(tmp2, T2)) + 2 * T3 / as.numeric(1 / invsigY[r, r] + crossprod(tmp3, T3))	
-			}
-	
-			res <- optim(Ginit[r, ], fobj, gobj, method = "BFGS")
-
-			if (abs(fobj(Ginit[r,]) - fobj(res$par)) < ftol * fobj(Ginit[r,])) {
-				Ginit[r,] <- res$par
-				break
-			} else {
-				Ginit[r,] <- res$par
-				i <- i + 1
-			}
-			
+			res <- spenvlp(b2=drop(t2), b3=drop(t3), A1=diag(r-1), A2=sigRes[r, r]*invC1, A3=invsigY[r, r]*invC2, ulam=ulam, eps=eps, maxit=maxit, weight=weight[r-u], a_vec_init=drop(Ginit[r,]))
+		
+			old_Ginit <- Ginit[r, ]
+			Ginit[r, ] <- res$a_vec
+		
+			if(sum((Ginit[r,]-old_Ginit)^2) < eps) break
+			i <- i + 1		
 		}
 		a <- qr.Q(qr(Ginit), complete = TRUE)
 		Gammahat <- a[, 1:u]
