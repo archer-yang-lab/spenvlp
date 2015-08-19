@@ -1,4 +1,4 @@
-spenv <- function(X, Y, u, eps=1e-10, maxit=1e4, ulam, weight) {
+spenv <- function(X, Y, u, eps=1e-10, maxit=1e4, ulam, weight, initial_value=NULL) {
 
 	a <- dim(Y)
 	n <- a[1]
@@ -38,12 +38,13 @@ spenv <- function(X, Y, u, eps=1e-10, maxit=1e4, ulam, weight) {
 		maxiter = 100
 		ftol = 1e-5
 
-		sv <- initial_value(X, Y, u)
-		Ginit <- sv$Ginit
-		obj1 <- sv$obj1
-		sigRes <- sv$sigRes
-		invsigY <- sv$invsigY
-		betaOLS <- sv$betaOLS
+		if(missing(initial_value)) Ginit <- initial_value(X,Y,u)
+		else Ginit <- initial_value %*% solve(initial_value[1:u, ])
+		# obj1 <- initial_value$obj1
+		initial_setup_tmp <- initial_setup(X, Y, u)
+		sigRes <- initial_setup_tmp$sigRes
+		invsigY <- initial_setup_tmp$invsigY
+		betaOLS <- initial_setup_tmp$betaOLS
 			
 		U1c2 <- array(0, dim = c(r-1, r-1))
 		V1c2 <- array(0, dim = c(r-1, r-1))
@@ -80,12 +81,13 @@ spenv <- function(X, Y, u, eps=1e-10, maxit=1e4, ulam, weight) {
 		maxiter = 100
 		ftol = 1e-5
 
-		sv <- initial_value(X, Y, u)
-		Ginit <- sv$Ginit
-		obj1 <- sv$obj1
-		sigRes <- sv$sigRes
-		invsigY <- sv$invsigY
-		betaOLS <- sv$betaOLS
+		if(missing(initial_value)) Ginit <- initial_value(X,Y,u)
+		else Ginit <- initial_value %*% solve(initial_value[1:u, ])
+		# obj1 <- initial_value$obj1
+		initial_setup_tmp <- initial_setup(X, Y, u)
+		sigRes <- initial_setup_tmp$sigRes
+		invsigY <- initial_setup_tmp$invsigY
+		betaOLS <- initial_setup_tmp$betaOLS
 
 		GUG <- crossprod(Ginit, (sigRes %*% Ginit))	
 		GVG <- crossprod(Ginit, (invsigY %*% Ginit))		
@@ -131,7 +133,8 @@ spenv <- function(X, Y, u, eps=1e-10, maxit=1e4, ulam, weight) {
 		etahat <- crossprod(Gammahat, betaOLS)
 		betahat <- Gammahat %*% etahat
 	}
-	nonzero_index <- (rowSums(abs(Gammahat))>0)
+	if(!is.na(sum(Gammahat))) nonzero_index <- (rowSums(abs(Gammahat))>0)
+	else nonzero_index <- NA
 	return(list(betahat = betahat, etahat = etahat, Gammahat = Gammahat, Gamma0hat = Gamma0hat, sigRes = sigRes, invsigY = invsigY, r = r, n = n, nonzero_index = nonzero_index))
 }
 	

@@ -19,11 +19,7 @@ spenvlp <- function(b2, b3, A1, A2, A3, ulam,
 		2*A3%*%(olda_vec+b3)/drop(1+(olda_vec+b3)%*%A3%*%(olda_vec+b3)))
 		U_working <- (U + gamma * olda_vec)
 		U_norm <- drop(sqrt(crossprod(U_working,U_working)))
-		t <- U_norm - weight * ulam
-		# print(t)
-		# print(U_norm)
-		# print(weight)
-		# print(ulam)		
+		t <- U_norm - weight * ulam	
 		if(t > 0){
 			a_vec <- U_working * t / (gamma * U_norm)
 		}else{
@@ -34,7 +30,7 @@ spenvlp <- function(b2, b3, A1, A2, A3, ulam,
 	    npass = npass + 1
 	    if(npass > maxit) break
 	}
-    ################################################################################
+  ################################################################################
     # output
     outlist <- list(a_vec = a_vec)
     class(outlist) <- c("spenvlp")

@@ -3,6 +3,7 @@ source("aobjects.R", chdir = TRUE)
 source("kernelmatrix.R", chdir = TRUE)
 source("kernels.R", chdir = TRUE)
 source("spenvlp.R", chdir = TRUE)
+source("spenv.r", chdir = TRUE)
 
 rbf <- rbfdot(sigma = 0.05) 
 ## create two vectors 

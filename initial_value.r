@@ -60,7 +60,7 @@ initial_value <- function(X, Y, u) {
 	}
 
 	Ginit <- init %*% solve(init[1:u, ])
-	return(list(Ginit = Ginit, obj1 = obj1, sigRes = sigRes, invsigY = invsigY, betaOLS = betaOLS))
+	Ginit
 }
 	
 
