@@ -46,7 +46,9 @@ alpha=matrix(rnorm(r),r,1)
 X=rmnorm(n,muX,SigmaX)
 Y=matrix(1,n,1)%*%t(alpha)+X%*%t(beta)+rmnorm(n,errMean,Sigma);
 
-lambda <- seq(1,0.001,length.out=100)
+lambda_tmp <- seq(1,0.001,length.out=100)
+lambda <- exp(seq(log(max(lambda_tmp)),log(min(lambda_tmp)),len=length(lambda_tmp)))
+
 #adaptive lasso step
 m1 <- ADLassoLambda.spenv(X, Y, u, eps=1e-10, maxit=1e4, lambda)
 

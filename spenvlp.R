@@ -1,4 +1,4 @@
-spenvlp <- function(b2, b3, A1, A2, A3, ulam, 
+spenvlp <- function(b2, b3, A1, A2, A3, lambda, 
     eps, maxit, weight, a_vec_init) {
  #################################################################################
     #data setup
@@ -14,12 +14,15 @@ spenvlp <- function(b2, b3, A1, A2, A3, ulam,
 	npass <- 0		
 	while(1){
 		olda_vec <- a_vec
-		U <- drop(4*A1%*%olda_vec/drop(1+olda_vec%*%A1%*%olda_vec)-					
-		2*A2%*%(olda_vec+b2)/drop(1+(olda_vec+b2)%*%A2%*%(olda_vec+b2))-		
-		2*A3%*%(olda_vec+b3)/drop(1+(olda_vec+b3)%*%A3%*%(olda_vec+b3)))
+		tmp1=A1%*%olda_vec
+		tmp2=A2%*%(olda_vec+b2)
+		tmp3=A3%*%(olda_vec+b3)
+		U <- drop(4*tmp1/drop(1+olda_vec%*%tmp1)-					
+		2*tmp2/drop(1+(olda_vec+b2)%*%tmp2)-		
+		2*tmp3/drop(1+(olda_vec+b3)%*%tmp3))
 		U_working <- (U + gamma * olda_vec)
 		U_norm <- drop(sqrt(crossprod(U_working,U_working)))
-		t <- U_norm - weight * ulam	
+		t <- U_norm - weight * lambda	
 		if(t > 0){
 			a_vec <- U_working * t / (gamma * U_norm)
 		}else{
@@ -33,6 +36,5 @@ spenvlp <- function(b2, b3, A1, A2, A3, ulam,
   ################################################################################
     # output
     outlist <- list(a_vec = a_vec)
-    class(outlist) <- c("spenvlp")
     outlist
 } 

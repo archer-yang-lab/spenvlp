@@ -24,7 +24,8 @@ env <- function(X, Y, u) {
 		Gamma0hat <- c()
 		return(list(betahat = betaOLS, etahat = betaOLS, Gammahat = Gammahat, Gamma0hat = Gamma0hat))
 		
-	} else if (u == (r-1)) {
+	} else if (u == (r-1)) # now the G is a u-1 by u-1 identity matrix
+	{
 	
 		maxiter = 100
 		ftol = 1e-5
@@ -36,17 +37,19 @@ env <- function(X, Y, u) {
 		sigRes <- (sigY - sigYX %*% tcrossprod(invsigX, sigYX)) * (n-1) / n
 		betaOLS <- sigYX %*% invsigX
 
+		# get init1  
 		tmp.y <- eigen(sigY)
 		bsxb <- tcrossprod(betaOLS, sigYX)
 		tmp2.y <- crossprod(tmp.y$vectors, bsxb)
 		tmp3.y <- sort(diag(tcrossprod(tmp2.y, tmp2.y)), decreasing = TRUE, index.return = TRUE)
 		init <- as.matrix(tmp.y$vectors[, tmp3.y$ix[1:u]]) 
 			
-		if (n > r + 1) {
+		if (n > r + 1) {		
 			eig1 <- eigen(t(init) %*% sigRes %*% init)
 			eig2 <- eigen(t(init) %*% invsigY %*% init)
 			obj1 <- sum(log(eig1$values)) + sum(log(eig2$values))
 			
+		# get init2	
 			tmp2 <- diag(1/sqrt(tmp.y$values)) %*% tmp2.y
 			tmp3 <- sort(diag(tcrossprod(tmp2, tmp2)), decreasing = TRUE, index.return = TRUE)
 			init.y <- as.matrix(tmp.y$vectors[, tmp3$ix[1:u]])
@@ -59,6 +62,7 @@ env <- function(X, Y, u) {
 			}
 			
 			if (n > r + p + 1) {
+			# get init3
 				tmp.res <- eigen(sigRes * (n-1) / n)
 				tmp2.res <- crossprod(tmp.res$vectors, bsxb)
 				tmp3.res <- sort(diag(tcrossprod(tmp2.res, tmp2.res)), decreasing = TRUE, index.return = TRUE)	
@@ -70,7 +74,7 @@ env <- function(X, Y, u) {
 					init <- init.res
 					obj1 <- obj3
 				}
-				
+				# get init4				
 				tmp2.res <- diag(1/sqrt(tmp.res$values)) %*% tmp2.res
 				tmp3.res <- sort(diag(tcrossprod(tmp2.res, tmp2.res)), decreasing = TRUE, index.return = TRUE)
 				init.res <- as.matrix(tmp.res$vectors[, tmp3.res$ix[1:u]])
@@ -95,13 +99,13 @@ env <- function(X, Y, u) {
 
 		i <- 1
 		while (i < maxiter) {
-			t2 <- sigRes[-r, r] / sigRes[r, r]
-			t3 <- invsigY[-r, r] / invsigY[r, r]
-			invC1 <- chol2inv(chol(U1c2))
-			invC2 <- chol2inv(chol(V1c2))
+			t2 <- sigRes[-r, r] / sigRes[r, r] # r-1 by 1
+			t3 <- invsigY[-r, r] / invsigY[r, r] # r-1 by 1
+			invC1 <- chol2inv(chol(U1c2)) # r-1 by r-1
+			invC2 <- chol2inv(chol(V1c2)) # r-1 by r-1
 				
 			fobj <- function(x) {
-				tmp2 <- x + t2
+				tmp2 <- x + t2  
 				tmp3 <- x + t3
 				T2 <- invC1 %*% tmp2	
 				T3 <- invC2 %*% tmp3
@@ -134,10 +138,12 @@ env <- function(X, Y, u) {
 		betahat <- Gammahat %*% etahat
 		return(list(betahat = betahat, etahat = etahat, Gammahat = Gammahat, Gamma0hat = Gamma0hat))	
 	
-	} else {
+	} 
+	###########################################
+	else {
 
 		maxiter = 100
-		ftol = 1e-5
+		ftol = 1e-3
 		
 
 		sigY <- cov(Y) 
@@ -195,7 +201,6 @@ env <- function(X, Y, u) {
 			}
 		}
 		
-
 		Ginit <- init %*% solve(init[1:u, ])
 
 
@@ -206,6 +211,7 @@ env <- function(X, Y, u) {
 		t4 <- crossprod(Ginit[(u+1):r,], Ginit[(u+1):r, ]) + diag(u)
 		i <- 1
 		while (i < maxiter) {
+			
 			for (j in (u+1):r) {
 				g <- as.matrix(Ginit[j, ])
 				t2 <- crossprod(Ginit[-j, ], as.matrix(sigRes[-j, j])) / sigRes[j, j]
@@ -217,11 +223,11 @@ env <- function(X, Y, u) {
 				GVGt2 <- g + t3
 				GVG <- GVG - tcrossprod(GVGt2, GVGt2) * invsigY[j, j] 
 				
-				t4 <- t4 - tcrossprod(as.matrix(Ginit[j, ]), as.matrix(Ginit[j, ]))
+				t4 <- t4 - tcrossprod(g, g)
 				invC1 <- chol2inv(chol(GUG))
 				invC2 <- chol2inv(chol(GVG))
-				invt4 <- chol2inv(chol(t4))
-						
+				invt4 <- chol2inv(chol(t4))				
+										
 				fobj <- function(x) {
 					tmp2 <- x + t2
 					tmp3 <- x + t3
@@ -252,18 +258,22 @@ env <- function(X, Y, u) {
 				
 				
 			}
-	
-			if (abs(fobj(Ginit[j,]) - res$value) < ftol * fobj(Ginit[j,])) {
+			a <- qr(Ginit)
+			Gammahat <- qr.Q(a)
+			e1 <- eigen(t(Gammahat) %*% sigRes %*% Gammahat)
+			e2 <- eigen(t(Gammahat) %*% invsigY %*% Gammahat)				
+			obj5 <- sum(log(e1$values)) + sum(log(e2$values))	
+			if (abs(obj1 - obj5) < ftol * abs(obj1)) {
 				Ginit[j,] <- res$par
 				break
 			} else {
+				obj1 <- obj5
 				Ginit[j,] <- res$par
 				i <- i + 1
 			}
 		}
-		a <- qr.Q(qr(Ginit), complete = TRUE)
-		Gammahat <- a[, 1:u]
-		Gamma0hat <- a[, (u+1):r]
+
+		Gamma0hat <- qr.Q(a, complete = TRUE)[, (u+1):r]
 		etahat <- crossprod(Gammahat, betaOLS)
 		betahat <- Gammahat %*% etahat
 		return(list(betahat = betahat, etahat = etahat, Gammahat = Gammahat, Gamma0hat = Gamma0hat))

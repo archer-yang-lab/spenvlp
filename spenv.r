@@ -1,4 +1,4 @@
-spenv <- function(X, Y, u, eps=1e-10, maxit=1e4, ulam, weight, initial_value=NULL) {
+spenv <- function(X, Y, u, eps=1e-5, maxit=3e2, lambda, weight, initial_value=NULL) {
 
 	a <- dim(Y)
 	n <- a[1]
@@ -35,11 +35,10 @@ spenv <- function(X, Y, u, eps=1e-10, maxit=1e4, ulam, weight, initial_value=NUL
 		
 	} else if (u == (r-1)) {
 	
-		maxiter = 100
-		ftol = 1e-5
+		if(missing(initial_value)) init <- initial_value(X,Y,u)
+		else init=initial_value
+		Ginit <- init %*% solve(init[1:u, ])
 
-		if(missing(initial_value)) Ginit <- initial_value(X,Y,u)
-		else Ginit <- initial_value %*% solve(initial_value[1:u, ])
 		# obj1 <- initial_value$obj1
 		initial_setup_tmp <- initial_setup(X, Y, u)
 		sigRes <- initial_setup_tmp$sigRes
@@ -53,7 +52,7 @@ spenv <- function(X, Y, u, eps=1e-10, maxit=1e4, ulam, weight, initial_value=NUL
 		V1c2 <- invsigY[-r, -r] - as.matrix(invsigY[-r, r]) %*% invsigY[r, -r] / invsigY[r, r]		
 
 		i <- 1
-		while (i < maxiter) {
+		while (i < maxit) {
 			t2 <- sigRes[-r, r] / sigRes[r, r]
 			t3 <- invsigY[-r, r] / invsigY[r, r]
 			invC1 <- chol2inv(chol(U1c2))
@@ -61,7 +60,7 @@ spenv <- function(X, Y, u, eps=1e-10, maxit=1e4, ulam, weight, initial_value=NUL
 	
 			res <- spenvlp(b2=drop(t2), b3=drop(t3), 
 							A1=diag(r-1), A2=sigRes[r, r]*invC1, A3=invsigY[r, r]*invC2, 
-							ulam=ulam, eps=eps, maxit=maxit, 
+							lambda=lambda, eps=eps, maxit=maxit, 
 							weight=weight[r-u], 
 							a_vec_init=drop(Ginit[r,]))
 		
@@ -76,13 +75,12 @@ spenv <- function(X, Y, u, eps=1e-10, maxit=1e4, ulam, weight, initial_value=NUL
 		Gamma0hat <- a[, r]
 		etahat <- crossprod(Gammahat, betaOLS)
 		betahat <- Gammahat %*% etahat	
-	} else {
-
-		maxiter = 100
-		ftol = 1e-5
-
-		if(missing(initial_value)) Ginit <- initial_value(X,Y,u)
-		else Ginit <- initial_value %*% solve(initial_value[1:u, ])
+	} 
+	else {
+		if(missing(initial_value)) init <- initial_value(X,Y,u)
+		else init=initial_value
+		Ginit <- init %*% solve(init[1:u, ])
+    
 		# obj1 <- initial_value$obj1
 		initial_setup_tmp <- initial_setup(X, Y, u)
 		sigRes <- initial_setup_tmp$sigRes
@@ -94,7 +92,7 @@ spenv <- function(X, Y, u, eps=1e-10, maxit=1e4, ulam, weight, initial_value=NUL
 
 		t4 <- crossprod(Ginit[(u+1):r,], Ginit[(u+1):r, ]) + diag(u)
 		i <- 1
-		while (i < maxiter) {
+		while (i < maxit) {
 			for (j in (u+1):r) {
 				g <- as.matrix(Ginit[j, ])
 				t2 <- crossprod(Ginit[-j, ], as.matrix(sigRes[-j, j])) / sigRes[j, j]
@@ -111,7 +109,7 @@ spenv <- function(X, Y, u, eps=1e-10, maxit=1e4, ulam, weight, initial_value=NUL
 				invC2 <- chol2inv(chol(GVG))
 				invt4 <- chol2inv(chol(t4))
 
-				res <- spenvlp(b2=drop(t2), b3=drop(t3), A1=invt4, A2=sigRes[j, j]*invC1, A3=invsigY[j, j]*invC2, ulam=ulam, eps=eps, maxit=maxit, weight=weight[j-u], a_vec_init=drop(Ginit[j,]))
+				res <- spenvlp(b2=drop(t2), b3=drop(t3), A1=invt4, A2=sigRes[j, j]*invC1, A3=invsigY[j, j]*invC2, lambda=lambda, eps=eps, maxit=maxit, weight=weight[j-u], a_vec_init=drop(Ginit[j,]))
 				
 				old_Ginit <- Ginit[j, ]
 				Ginit[j, ] <- res$a_vec
@@ -133,6 +131,7 @@ spenv <- function(X, Y, u, eps=1e-10, maxit=1e4, ulam, weight, initial_value=NUL
 		etahat <- crossprod(Gammahat, betaOLS)
 		betahat <- Gammahat %*% etahat
 	}
+	cat('The number of iterations:',i,'.\n',sep='')
 	if(!is.na(sum(Gammahat))) nonzero_index <- (rowSums(abs(Gammahat))>0)
 	else nonzero_index <- NA
 	return(list(betahat = betahat, etahat = etahat, Gammahat = Gammahat, Gamma0hat = Gamma0hat, sigRes = sigRes, invsigY = invsigY, r = r, n = n, nonzero_index = nonzero_index))

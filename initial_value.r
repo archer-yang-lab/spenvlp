@@ -58,9 +58,7 @@ initial_value <- function(X, Y, u) {
 			}
 		}
 	}
-
-	Ginit <- init %*% solve(init[1:u, ])
-	Ginit
+  init
 }
 	
 
