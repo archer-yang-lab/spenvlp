@@ -3,8 +3,8 @@ source("aobjects.R", chdir = TRUE)
 source("kernelmatrix.R", chdir = TRUE)
 source("kernels.R", chdir = TRUE)
 source("spenvlp.R", chdir = TRUE)
-dyn.load("spenvlp_engine.so")
-source("spenvlp_fortran.R", chdir = TRUE)
+source("fista_backtracking.R", chdir = TRUE)
+source("fista.R", chdir = TRUE)
 source("spenv.r", chdir = TRUE)
 rbf <- rbfdot(sigma = 0.05) 
 ## create two vectors 
@@ -31,29 +31,28 @@ eps <- 1e-18
 maxit <- 1e5
 a_vec_init=rnorm(22)
 
-olda_vec1 <- spenvlp(b2=b2, b3=b3, A1=A1, A2=A2, A3=A3, lambda=lambda,eps=eps, maxit=maxit, weight=weight, a_vec_init=a_vec_init)
+system.time(olda_vec <- spenvlp(b2=b2, b3=b3, A1=A1, A2=A2, A3=A3, lambda=lambda,eps=eps, maxit=maxit, weight=weight, a_vec_init=a_vec_init))
+system.time(olda_vec1 <- fista(b2=b2, b3=b3, A1=A1, A2=A2, A3=A3, lambda=lambda,eps=eps, maxit=maxit, weight=weight, a_vec_init=a_vec_init))
 
-olda_vec <- spenvlp_fortran(b2=b2, b3=b3, A1=A1, A2=A2, A3=A3, lambda=lambda,eps=eps, maxit=maxit, weight=weight, a_vec_init=a_vec_init)
-
-
-
-olda_vec <- olda_vec$a_vec
+ 
+ov <- olda_vec1$a_vec
+gamma = olda_vec1$L
 
 lmax_A1 <- max(eigen(A1)$values)
 lmax_A2 <- max(eigen(A2)$values)
 lmax_A3 <- max(eigen(A3)$values)
 gamma <- 4*lmax_A1 + 2*lmax_A2 + 2*lmax_A3
 
-U <- drop(4*A1%*%olda_vec/drop(1+olda_vec%*%A1%*%olda_vec)-					
-2*A2%*%(olda_vec+b2)/drop(1+(olda_vec+b2)%*%A2%*%(olda_vec+b2))-		
-2*A3%*%(olda_vec+b3)/drop(1+(olda_vec+b3)%*%A3%*%(olda_vec+b3)))
-U_working <- (U + gamma * olda_vec)
+U <- drop(4*A1%*%ov/drop(1+ov%*%A1%*%ov)-					
+2*A2%*%(ov+b2)/drop(1+(ov+b2)%*%A2%*%(ov+b2))-		
+2*A3%*%(ov+b3)/drop(1+(ov+b3)%*%A3%*%(ov+b3)))
+U_working <- (U + gamma * ov)
 U_norm <- drop(sqrt(crossprod(U_working,U_working)))
 t <- U_norm - weight * lambda
 
-anorm <- sqrt(crossprod(olda_vec,olda_vec))
+anorm <- sqrt(crossprod(ov,ov))
 if(anorm!=0){
-	tmp  <- -U + lambda * weight * olda_vec/anorm
+	tmp  <- -U + lambda * weight * ov/anorm
 	print(tmp)	
 }else{
 	print(t)
